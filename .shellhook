@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+export WD=$PWD
+
+for x in bin out; do
+    if [ ! -d "$WD/$x" ]; then
+        mkdir "$WD/$x"
+    fi
+done
+
+set -eu
+
+# NOTE: See `https://www.nand2tetris.org/software`.
+if [ ! -f "$WD/nand2tetris.zip" ]; then
+    wget \
+        --no-check-certificate \
+        "https://docs.google.com/uc?export=download&id=1xZzcMIUETv3u3sdpM_oTJSTetpVee3KZ" \
+        -O "$WD/nand2tetris.zip"
+    unzip -d "$WD" "$WD/nand2tetris.zip"
+fi
+
+set +eu

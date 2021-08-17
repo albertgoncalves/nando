@@ -1,0 +1,14 @@
+*
+!.gitignore
+!shell.nix
+!.shellhook
+!.clang-format
+!vim/
+!*.vim
+!scripts/
+!*.sh
+!src/
+!*.cpp
+!*.hpp
+!examples/
+!*.asm
