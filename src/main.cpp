@@ -188,7 +188,7 @@ struct Memory {
 #define IS_ALPHA_OR_DIGIT_OR_PUNCT(x) \
     (IS_ALPHA(x) || IS_DIGIT(x) || IS_PUNCT(x))
 
-static Vec2<u32> get_position(Memory* memory, u32 offset) {
+static void print(File* stream, Memory* memory, u32 offset) {
     Vec2<u32> position = {1, 1};
     EXIT_IF(memory->len_chars <= offset);
     for (u32 i = 0; i < offset; ++i) {
@@ -199,11 +199,6 @@ static Vec2<u32> get_position(Memory* memory, u32 offset) {
             ++position.x;
         }
     }
-    return position;
-}
-
-static void print(File* stream, Memory* memory, u32 offset) {
-    const Vec2<u32> position = get_position(memory, offset);
     fprintf(stream, "%s:%u:%u\n", memory->path, position.y, position.x);
 }
 
