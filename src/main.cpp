@@ -89,24 +89,24 @@ enum SymbolJump {
 };
 
 enum SymbolPreDef {
-    LABEL_R0_SP   = 0x0000,
-    LABEL_R1_LCL  = 0x0001,
-    LABEL_R2_ARG  = 0x0002,
-    LABEL_R3_THIS = 0x0003,
-    LABEL_R4_THAT = 0x0004,
-    LABEL_R5      = 0x0005,
-    LABEL_R6      = 0x0006,
-    LABEL_R7      = 0x0007,
-    LABEL_R8      = 0x0008,
-    LABEL_R9      = 0x0009,
-    LABEL_R10     = 0x000A,
-    LABEL_R11     = 0x000B,
-    LABEL_R12     = 0x000C,
-    LABEL_R13     = 0x000D,
-    LABEL_R14     = 0x000E,
-    LABEL_R15     = 0x000F,
-    LABEL_SCREEN  = 0x4000,
-    LABEL_KBD     = 0x6000,
+    PREDEF_R0_SP   = 0x0000,
+    PREDEF_R1_LCL  = 0x0001,
+    PREDEF_R2_ARG  = 0x0002,
+    PREDEF_R3_THIS = 0x0003,
+    PREDEF_R4_THAT = 0x0004,
+    PREDEF_R5      = 0x0005,
+    PREDEF_R6      = 0x0006,
+    PREDEF_R7      = 0x0007,
+    PREDEF_R8      = 0x0008,
+    PREDEF_R9      = 0x0009,
+    PREDEF_R10     = 0x000A,
+    PREDEF_R11     = 0x000B,
+    PREDEF_R12     = 0x000C,
+    PREDEF_R13     = 0x000D,
+    PREDEF_R14     = 0x000E,
+    PREDEF_R15     = 0x000F,
+    PREDEF_SCREEN  = 0x4000,
+    PREDEF_KBD     = 0x6000,
 };
 
 static const char* BYTES[] = {
@@ -357,67 +357,67 @@ static void set_tokens(Memory* memory) {
 }
 
 template <SymbolPreDef X>
-static Inst* get_pre_def_with(Memory* memory) {
+static Inst* get_predef_with(Memory* memory) {
     Inst* inst = alloc_inst(memory);
     inst->tag = INST_ADDRESS;
     inst->body.as_u15 = static_cast<u16>(X);
     return inst;
 }
 
-static Inst* get_pre_def(Memory* memory, String string) {
+static Inst* get_predef(Memory* memory, String string) {
     if ((string == TO_STR("R0")) || (string == TO_STR("SP"))) {
-        return get_pre_def_with<LABEL_R0_SP>(memory);
+        return get_predef_with<PREDEF_R0_SP>(memory);
     }
     if ((string == TO_STR("R1")) || (string == TO_STR("LCL"))) {
-        return get_pre_def_with<LABEL_R1_LCL>(memory);
+        return get_predef_with<PREDEF_R1_LCL>(memory);
     }
     if ((string == TO_STR("R2")) || (string == TO_STR("ARG"))) {
-        return get_pre_def_with<LABEL_R2_ARG>(memory);
+        return get_predef_with<PREDEF_R2_ARG>(memory);
     }
     if ((string == TO_STR("R3")) || (string == TO_STR("THIS"))) {
-        return get_pre_def_with<LABEL_R3_THIS>(memory);
+        return get_predef_with<PREDEF_R3_THIS>(memory);
     }
     if ((string == TO_STR("R4")) || (string == TO_STR("THAT"))) {
-        return get_pre_def_with<LABEL_R4_THAT>(memory);
+        return get_predef_with<PREDEF_R4_THAT>(memory);
     }
     if (string == TO_STR("R5")) {
-        return get_pre_def_with<LABEL_R5>(memory);
+        return get_predef_with<PREDEF_R5>(memory);
     }
     if (string == TO_STR("R6")) {
-        return get_pre_def_with<LABEL_R6>(memory);
+        return get_predef_with<PREDEF_R6>(memory);
     }
     if (string == TO_STR("R7")) {
-        return get_pre_def_with<LABEL_R7>(memory);
+        return get_predef_with<PREDEF_R7>(memory);
     }
     if (string == TO_STR("R8")) {
-        return get_pre_def_with<LABEL_R8>(memory);
+        return get_predef_with<PREDEF_R8>(memory);
     }
     if (string == TO_STR("R9")) {
-        return get_pre_def_with<LABEL_R9>(memory);
+        return get_predef_with<PREDEF_R9>(memory);
     }
     if (string == TO_STR("R10")) {
-        return get_pre_def_with<LABEL_R10>(memory);
+        return get_predef_with<PREDEF_R10>(memory);
     }
     if (string == TO_STR("R11")) {
-        return get_pre_def_with<LABEL_R11>(memory);
+        return get_predef_with<PREDEF_R11>(memory);
     }
     if (string == TO_STR("R12")) {
-        return get_pre_def_with<LABEL_R12>(memory);
+        return get_predef_with<PREDEF_R12>(memory);
     }
     if (string == TO_STR("R13")) {
-        return get_pre_def_with<LABEL_R13>(memory);
+        return get_predef_with<PREDEF_R13>(memory);
     }
     if (string == TO_STR("R14")) {
-        return get_pre_def_with<LABEL_R14>(memory);
+        return get_predef_with<PREDEF_R14>(memory);
     }
     if (string == TO_STR("R15")) {
-        return get_pre_def_with<LABEL_R15>(memory);
+        return get_predef_with<PREDEF_R15>(memory);
     }
     if (string == TO_STR("SCREEN")) {
-        return get_pre_def_with<LABEL_SCREEN>(memory);
+        return get_predef_with<PREDEF_SCREEN>(memory);
     }
     if (string == TO_STR("KBD")) {
-        return get_pre_def_with<LABEL_KBD>(memory);
+        return get_predef_with<PREDEF_KBD>(memory);
     }
     return null;
 }
@@ -439,7 +439,7 @@ static void parse_address(Memory* memory, u32* i) {
         break;
     }
     case TOKEN_STR: {
-        if (get_pre_def(memory, token.body.as_string)) {
+        if (get_predef(memory, token.body.as_string)) {
             return;
         }
         Inst* inst = alloc_inst(memory);
