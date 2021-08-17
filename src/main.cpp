@@ -207,7 +207,7 @@ static void set_chars_from_file(Memory* memory, const char* path) {
     EXIT_IF(!file);
     fseek(file, 0, SEEK_END);
     memory->len_chars = static_cast<u32>(ftell(file));
-    EXIT_IF(CAP_CHARS <= memory->len_chars);
+    EXIT_IF(CAP_CHARS <= (memory->len_chars + 1));
     rewind(file);
     EXIT_IF(fread(memory->chars, sizeof(char), memory->len_chars, file) !=
             memory->len_chars);
