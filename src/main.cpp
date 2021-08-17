@@ -731,19 +731,18 @@ static void parse_compute(Memory* memory, u32* i) {
     SymbolDest dest = DEST_NULL;
     SymbolJump jump = JUMP_NULL;
     for (u32 j = *i; j < memory->len_tokens; ++j) {
-        Token token = get_token(memory, j);
+        const Token token = get_token(memory, j);
         if (token.tag == TOKEN_EQUALS) {
             EXIT_IF_PRINT((*i) == j, memory, token.offset);
             dest = get_dest(memory, i);
             EXIT_IF(*i != j);
-            token = get_token(memory, ++(*i));
+            ++(*i);
             comp = get_comp(memory, i);
             if (*i == memory->len_tokens) {
                 break;
             }
-            token = get_token(memory, *i);
-            if (token.tag == TOKEN_SCOLON) {
-                token = get_token(memory, ++(*i));
+            if (get_token(memory, *i).tag == TOKEN_SCOLON) {
+                ++(*i);
                 jump = get_jump(memory, i);
             }
             break;
@@ -751,7 +750,7 @@ static void parse_compute(Memory* memory, u32* i) {
             EXIT_IF_PRINT(*i == j, memory, token.offset);
             comp = get_comp(memory, i);
             EXIT_IF(*i != j);
-            token = get_token(memory, ++(*i));
+            ++(*i);
             jump = get_jump(memory, i);
             break;
         }
@@ -762,19 +761,23 @@ static void parse_compute(Memory* memory, u32* i) {
 }
 
 static void parse_label(Memory* memory, u32* i) {
-    Token token = get_token(memory, *i);
-    if (token.tag != TOKEN_STR) {
-        EXIT_PRINT(memory, token.offset);
+    {
+        const Token token = get_token(memory, *i);
+        if (token.tag != TOKEN_STR) {
+            EXIT_PRINT(memory, token.offset);
+        }
+        {
+            Symbol* label = alloc_label(memory);
+            label->string = token.body.as_string;
+            EXIT_IF_PRINT(MAX_U15 < memory->len_insts, memory, token.offset);
+            label->address_u15 = static_cast<u16>(memory->len_insts);
+        }
     }
     {
-        Symbol* label = alloc_label(memory);
-        label->string = token.body.as_string;
-        EXIT_IF_PRINT(MAX_U15 < memory->len_insts, memory, token.offset);
-        label->address_u15 = static_cast<u16>(memory->len_insts);
+        const Token token = get_token(memory, ++(*i));
+        EXIT_IF_PRINT(token.tag != TOKEN_RPAREN, memory, token.offset);
+        ++(*i);
     }
-    token = get_token(memory, ++(*i));
-    EXIT_IF_PRINT(token.tag != TOKEN_RPAREN, memory, token.offset);
-    ++(*i);
 }
 
 static void set_insts(Memory* memory) {
@@ -855,7 +858,7 @@ static void set_bytes(char* chars, u16 bytes) {
 }
 
 static void emit(Memory* memory, const char* path) {
-    u32 n = memory->len_insts * 17;
+    const u32 n = memory->len_insts * 17;
     EXIT_IF(CAP_CHARS <= n);
     for (u32 i = 0; i < memory->len_insts; ++i) {
         const Inst inst = memory->insts[i];
