@@ -895,6 +895,7 @@ i32 main(i32 n, char** args) {
             "\n"
             "sizeof(String)       : %zu\n"
             "sizeof(Token)        : %zu\n"
+            "sizeof(SymbolComp)   : %zu\n"
             "sizeof(SymbolPreDef) : %zu\n"
             "sizeof(Symbol)       : %zu\n"
             "sizeof(Inst)         : %zu\n"
@@ -902,6 +903,7 @@ i32 main(i32 n, char** args) {
             "\n",
             sizeof(String),
             sizeof(Token),
+            sizeof(SymbolComp),
             sizeof(SymbolPreDef),
             sizeof(Symbol),
             sizeof(Inst),
