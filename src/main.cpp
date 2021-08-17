@@ -188,46 +188,6 @@ struct Memory {
 #define IS_ALPHA_OR_DIGIT_OR_PUNCT(x) \
     (IS_ALPHA(x) || IS_DIGIT(x) || IS_PUNCT(x))
 
-static void print(File* stream, Memory* memory, u32 offset) {
-    Vec2<u32> position = {1, 1};
-    EXIT_IF(memory->len_chars <= offset);
-    for (u32 i = 0; i < offset; ++i) {
-        if (memory->chars[i] == '\n') {
-            ++position.y;
-            position.x = 1;
-        } else {
-            ++position.x;
-        }
-    }
-    fprintf(stream, "%s:%u:%u\n", memory->path, position.y, position.x);
-}
-
-static void set_chars_from_file(Memory* memory, const char* path) {
-    File* file = fopen(path, "r");
-    EXIT_IF(!file);
-    fseek(file, 0, SEEK_END);
-    memory->len_chars = static_cast<u32>(ftell(file));
-    EXIT_IF(CAP_CHARS <= (memory->len_chars + 1));
-    rewind(file);
-    EXIT_IF(fread(memory->chars, sizeof(char), memory->len_chars, file) !=
-            memory->len_chars);
-    fclose(file);
-    memory->chars[memory->len_chars] = '\0';
-    memory->path = path;
-}
-
-static bool to_digits(const char* chars, u32* i, u16* a) {
-    *a = 0;
-    while (IS_DIGIT(chars[*i])) {
-        const u16 b = (*a * 10) + static_cast<u16>(chars[(*i)++] - '0');
-        if (b < *a) {
-            return false;
-        }
-        *a = b;
-    }
-    return true;
-}
-
 static Token* alloc_token(Memory* memory) {
     EXIT_IF(CAP_TOKENS <= memory->len_tokens);
     return &memory->tokens[memory->len_tokens++];
@@ -248,8 +208,48 @@ static Symbol* alloc_var(Memory* memory) {
     return &memory->vars[memory->len_vars++];
 }
 
+static void set_chars_from_file(Memory* memory, const char* path) {
+    File* file = fopen(path, "r");
+    EXIT_IF(!file);
+    fseek(file, 0, SEEK_END);
+    memory->len_chars = static_cast<u32>(ftell(file));
+    EXIT_IF(CAP_CHARS <= (memory->len_chars + 1));
+    rewind(file);
+    EXIT_IF(fread(memory->chars, sizeof(char), memory->len_chars, file) !=
+            memory->len_chars);
+    fclose(file);
+    memory->chars[memory->len_chars] = '\0';
+    memory->path = path;
+}
+
+static bool set_digits(const char* chars, u32* i, u16* a) {
+    *a = 0;
+    while (IS_DIGIT(chars[*i])) {
+        const u16 b = (*a * 10) + static_cast<u16>(chars[(*i)++] - '0');
+        if (b < *a) {
+            return false;
+        }
+        *a = b;
+    }
+    return true;
+}
+
+static void print(File* stream, Memory* memory, u32 offset) {
+    Vec2<u32> position = {1, 1};
+    EXIT_IF(memory->len_chars <= offset);
+    for (u32 i = 0; i < offset; ++i) {
+        if (memory->chars[i] == '\n') {
+            ++position.y;
+            position.x = 1;
+        } else {
+            ++position.x;
+        }
+    }
+    fprintf(stream, "%s:%u:%u\n", memory->path, position.y, position.x);
+}
+
 template <TokenTag X>
-static void set_char_with(Memory* memory, u32* i) {
+static void set_token_with(Memory* memory, u32* i) {
     Token* token = alloc_token(memory);
     token->tag = X;
     token->offset = *i;
@@ -281,43 +281,43 @@ static void set_tokens(Memory* memory) {
             break;
         }
         case '(': {
-            set_char_with<TOKEN_LPAREN>(memory, &i);
+            set_token_with<TOKEN_LPAREN>(memory, &i);
             break;
         }
         case ')': {
-            set_char_with<TOKEN_RPAREN>(memory, &i);
+            set_token_with<TOKEN_RPAREN>(memory, &i);
             break;
         }
         case '@': {
-            set_char_with<TOKEN_AT>(memory, &i);
+            set_token_with<TOKEN_AT>(memory, &i);
             break;
         }
         case '=': {
-            set_char_with<TOKEN_EQUALS>(memory, &i);
+            set_token_with<TOKEN_EQUALS>(memory, &i);
             break;
         }
         case ';': {
-            set_char_with<TOKEN_SCOLON>(memory, &i);
+            set_token_with<TOKEN_SCOLON>(memory, &i);
             break;
         }
         case '+': {
-            set_char_with<TOKEN_PLUS>(memory, &i);
+            set_token_with<TOKEN_PLUS>(memory, &i);
             break;
         }
         case '-': {
-            set_char_with<TOKEN_MINUS>(memory, &i);
+            set_token_with<TOKEN_MINUS>(memory, &i);
             break;
         }
         case '!': {
-            set_char_with<TOKEN_BANG>(memory, &i);
+            set_token_with<TOKEN_BANG>(memory, &i);
             break;
         }
         case '&': {
-            set_char_with<TOKEN_AMPERS>(memory, &i);
+            set_token_with<TOKEN_AMPERS>(memory, &i);
             break;
         }
         case '|': {
-            set_char_with<TOKEN_PIPE>(memory, &i);
+            set_token_with<TOKEN_PIPE>(memory, &i);
             break;
         }
         default: {
@@ -328,7 +328,7 @@ static void set_tokens(Memory* memory) {
             token->offset = i;
             if (IS_DIGIT(memory->chars[i])) {
                 u32 j = i;
-                if (!to_digits(memory->chars, &i, &token->body.as_u15) ||
+                if (!set_digits(memory->chars, &i, &token->body.as_u15) ||
                     (MAX_U15 < token->body.as_u15))
                 {
                     EXIT_PRINT(memory, j);
@@ -733,7 +733,7 @@ static void parse_compute(Memory* memory, u32* i) {
     for (u32 j = *i; j < memory->len_tokens; ++j) {
         const Token token = get_token(memory, j);
         if (token.tag == TOKEN_EQUALS) {
-            EXIT_IF_PRINT((*i) == j, memory, token.offset);
+            EXIT_IF_PRINT(*i == j, memory, token.offset);
             dest = get_dest(memory, i);
             EXIT_IF(*i != j);
             ++(*i);
