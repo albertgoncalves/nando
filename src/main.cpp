@@ -1,10 +1,10 @@
-#include "str.hpp"
+#include "hash.hpp"
 
 #define CAP_CHARS  (1 << 19)
 #define CAP_TOKENS (1 << 17)
 #define CAP_INSTS  (1 << 15)
-#define CAP_LABELS (1 << 10)
-#define CAP_VARS   (1 << 7)
+#define CAP_LABELS 4513
+#define CAP_VARS   131
 
 #define MAX_U15 0x7FFF
 
@@ -115,11 +115,6 @@ static const char* BYTES[] = {
 };
 // clang-format on
 
-struct Symbol {
-    String string;
-    u16    address_u15;
-};
-
 enum InstTag {
     INST_UNRESOLVED = 0,
     INST_ADDRESS,
@@ -144,17 +139,15 @@ struct Inst {
 };
 
 struct Memory {
-    const char* path;
-    char        chars[CAP_CHARS];
-    Token       tokens[CAP_TOKENS];
-    Inst        insts[CAP_INSTS];
-    Symbol      labels[CAP_LABELS];
-    Symbol      vars[CAP_VARS];
-    u32         len_chars;
-    u32         len_tokens;
-    u32         len_insts;
-    u32         len_labels;
-    u32         len_vars;
+    const char*                    path;
+    char                           chars[CAP_CHARS];
+    Token                          tokens[CAP_TOKENS];
+    Inst                           insts[CAP_INSTS];
+    Table<String, u16, CAP_LABELS> labels;
+    Table<String, u16, CAP_VARS>   vars;
+    u32                            len_chars;
+    u32                            len_tokens;
+    u32                            len_insts;
 };
 
 #define EXIT_PRINT(memory, x)     \
@@ -190,16 +183,6 @@ static Token* alloc_token(Memory* memory) {
 static Inst* alloc_inst(Memory* memory) {
     EXIT_IF(CAP_INSTS <= memory->len_insts);
     return &memory->insts[memory->len_insts++];
-}
-
-static Symbol* alloc_label(Memory* memory) {
-    EXIT_IF(CAP_LABELS <= memory->len_labels);
-    return &memory->labels[memory->len_labels++];
-}
-
-static Symbol* alloc_var(Memory* memory) {
-    EXIT_IF(CAP_VARS <= memory->len_vars);
-    return &memory->vars[memory->len_vars++];
 }
 
 static void set_chars_from_file(Memory* memory, const char* path) {
@@ -688,7 +671,6 @@ static SymbolComp get_comp(Memory* memory, u32* i) {
     case TOKEN_AMPERS:
     case TOKEN_PIPE:
     default: {
-        break;
     }
     }
     EXIT_PRINT(memory, left.offset);
@@ -761,10 +743,10 @@ static void parse_label(Memory* memory, u32* i) {
             EXIT_PRINT(memory, token.offset);
         }
         {
-            Symbol* label = alloc_label(memory);
-            label->string = token.body.as_string;
             EXIT_IF_PRINT(MAX_U15 < memory->len_insts, memory, token.offset);
-            label->address_u15 = static_cast<u16>(memory->len_insts);
+            insert(&memory->labels,
+                   token.body.as_string,
+                   static_cast<u16>(memory->len_insts));
         }
     }
     {
@@ -815,27 +797,27 @@ static void resolve_labels(Memory* memory) {
     for (u32 i = 0; i < memory->len_insts; ++i) {
         Inst* inst = &memory->insts[i];
         if (inst->tag == INST_UNRESOLVED) {
-            for (u32 j = 0; j < memory->len_labels; ++j) {
-                if (inst->body.as_string == memory->labels[j].string) {
-                    inst->tag = INST_ADDRESS;
-                    inst->body.as_u15 = memory->labels[j].address_u15;
-                    goto next;
-                }
-            }
-            for (u32 j = 0; j < memory->len_vars; ++j) {
-                if (inst->body.as_string == memory->vars[j].string) {
-                    inst->tag = INST_ADDRESS;
-                    inst->body.as_u15 = memory->vars[j].address_u15;
-                    goto next;
-                }
-            }
-            EXIT_IF(MAX_U15 < memory->len_vars);
-            u16 address = static_cast<u16>(memory->len_vars) + 0x0010;
             {
-                Symbol* var = alloc_var(memory);
-                var->string = inst->body.as_string;
-                var->address_u15 = address;
+                const u16* address =
+                    lookup(&memory->labels, inst->body.as_string);
+                if (address) {
+                    inst->tag = INST_ADDRESS;
+                    inst->body.as_u15 = *address;
+                    goto next;
+                }
             }
+            {
+                const u16* address =
+                    lookup(&memory->vars, inst->body.as_string);
+                if (address) {
+                    inst->tag = INST_ADDRESS;
+                    inst->body.as_u15 = *address;
+                    goto next;
+                }
+            }
+            EXIT_IF(MAX_U15 < memory->vars.len);
+            u16 address = static_cast<u16>(memory->vars.len) + 0x0010;
+            insert(&memory->vars, inst->body.as_string, address);
             inst->tag = INST_ADDRESS;
             inst->body.as_u15 = address;
         }
@@ -887,20 +869,22 @@ static void emit(Memory* memory, const char* path) {
 i32 main(i32 n, char** args) {
     fprintf(stderr,
             "\n"
-            "sizeof(String)       : %zu\n"
-            "sizeof(Token)        : %zu\n"
-            "sizeof(SymbolComp)   : %zu\n"
-            "sizeof(SymbolPreDef) : %zu\n"
-            "sizeof(Symbol)       : %zu\n"
-            "sizeof(Inst)         : %zu\n"
-            "sizeof(Memory)       : %zu\n"
+            "sizeof(String)                         : %zu\n"
+            "sizeof(Token)                          : %zu\n"
+            "sizeof(SymbolComp)                     : %zu\n"
+            "sizeof(SymbolPreDef)                   : %zu\n"
+            "sizeof(Inst)                           : %zu\n"
+            "sizeof(Table<String, u16, CAP_LABELS>) : %zu\n"
+            "sizeof(Table<String, u16, CAP_VARS>)   : %zu\n"
+            "sizeof(Memory)                         : %zu\n"
             "\n",
             sizeof(String),
             sizeof(Token),
             sizeof(SymbolComp),
             sizeof(SymbolPreDef),
-            sizeof(Symbol),
             sizeof(Inst),
+            sizeof(Table<String, u16, CAP_LABELS>),
+            sizeof(Table<String, u16, CAP_VARS>),
             sizeof(Memory));
     EXIT_IF(n < 3);
     {
@@ -909,6 +893,16 @@ i32 main(i32 n, char** args) {
         set_tokens(memory);
         set_insts(memory);
         resolve_labels(memory);
+        fprintf(stderr,
+                "memory->labels.len        : %u\n"
+                "memory->labels.collisions : %u\n"
+                "memory->vars.len          : %u\n"
+                "memory->vars.collisions   : %u\n"
+                "\n",
+                memory->labels.len,
+                memory->labels.collisions,
+                memory->vars.len,
+                memory->vars.collisions);
         emit(memory, args[2]);
         free(memory);
     }
