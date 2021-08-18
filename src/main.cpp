@@ -1,4 +1,4 @@
-#include "prelude.hpp"
+#include "str.hpp"
 
 #define CAP_CHARS  (1 << 19)
 #define CAP_TOKENS (1 << 17)
