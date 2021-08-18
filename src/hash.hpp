@@ -17,8 +17,8 @@ struct Table {
     u32        collisions;
 };
 
-#define FNV_32_PRIME        16777619
-#define FNV_32_OFFSET_BASIS 2166136261
+#define FNV_32_PRIME        16777619u
+#define FNV_32_OFFSET_BASIS 2166136261u
 
 static u32 fnv_1a_32(const u8* bytes, u32 len) {
     u32 hash = FNV_32_OFFSET_BASIS;
