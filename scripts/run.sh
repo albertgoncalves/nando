@@ -14,6 +14,7 @@ flags=(
     "-fsanitize=undefined"
     "-fshort-enums"
     "-fuse-ld=lld"
+    "-g"
     "-march=native"
     "-O1"
     "-std=c++11"
