@@ -167,13 +167,7 @@ struct Memory {
     {                                       \
         if (condition) {                    \
             print(stderr, memory, x);       \
-            fprintf(stderr,                 \
-                    "%s:%s:%d `%s`\n",      \
-                    __FILE__,               \
-                    __func__,               \
-                    __LINE__,               \
-                    #condition);            \
-            exit(EXIT_FAILURE);             \
+            ERROR_WITH(#condition);         \
         }                                   \
     }
 
