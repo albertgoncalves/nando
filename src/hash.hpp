@@ -39,6 +39,12 @@ static u32 find_slot(Table<K, V, N>* table, K key) {
     for (u32 i = 0; i < N; ++i) {
         u32 j = (h + i) % N;
         if ((!table->items[j].alive) || (table->items[j].key == key)) {
+#ifdef DEBUG
+            if (i != 0) {
+                print(stderr, key);
+                fprintf(stderr, " (%u)\n", i);
+            }
+#endif
             table->collisions += i;
             return j;
         }

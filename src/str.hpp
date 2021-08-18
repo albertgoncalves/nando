@@ -14,11 +14,13 @@ struct String {
         sizeof(literal) - 1, \
     })
 
-#define FMT_STR "%.*s"
+#ifdef DEBUG
 
-#define ARG_STR(string) string.len, string.chars
+static void print(File* stream, String string) {
+    fprintf(stream, "%.*s", string.len, string.chars);
+}
 
-#define PRINT_STR(stream, string) fprintf(stream, FMT_STR, ARG_STR(string))
+#endif
 
 static bool operator==(String a, String b) {
     return (a.len == b.len) && (!memcmp(a.chars, b.chars, a.len));

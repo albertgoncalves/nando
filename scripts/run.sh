@@ -3,6 +3,7 @@
 set -eu
 
 flags=(
+    "-DDEBUG"
     "-ferror-limit=1"
     "-fno-autolink"
     "-fno-exceptions"

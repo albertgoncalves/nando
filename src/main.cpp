@@ -893,6 +893,9 @@ i32 main(i32 n, char** args) {
         set_tokens(memory);
         set_insts(memory);
         resolve_labels(memory);
+#ifdef DEBUG
+        fprintf(stderr, "\n");
+#endif
         fprintf(stderr,
                 "memory->labels.len        : %u\n"
                 "memory->labels.collisions : %u\n"
