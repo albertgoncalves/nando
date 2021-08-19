@@ -153,14 +153,14 @@ struct Memory {
 #define EXIT_PRINT(memory, x)     \
     {                             \
         print(stderr, memory, x); \
-        ERROR();                  \
+        EXIT();                   \
     }
 
 #define EXIT_IF_PRINT(condition, memory, x) \
     {                                       \
         if (condition) {                    \
             print(stderr, memory, x);       \
-            ERROR_WITH(#condition);         \
+            EXIT_WITH(#condition);          \
         }                                   \
     }
 
@@ -494,7 +494,7 @@ static SymbolDest get_dest(Memory* memory, u32* i) {
         return DEST_AMD;
     }
     default: {
-        ERROR();
+        EXIT();
     }
     }
 }
@@ -854,7 +854,7 @@ static void emit(Memory* memory, const char* path) {
         }
         case INST_UNRESOLVED:
         default: {
-            ERROR();
+            EXIT();
         }
         }
     }

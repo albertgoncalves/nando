@@ -49,7 +49,7 @@ static u32 find_slot(Table<K, V, N>* table, K key) {
             return j;
         }
     }
-    ERROR();
+    EXIT();
 }
 
 template <typename K, typename V, usize N>
