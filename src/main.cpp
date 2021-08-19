@@ -1,12 +1,15 @@
 #include "hash.hpp"
 
+#define MAX_U15     0x7FFF
+#define OFFSET_VARS 0x0010
+
 #define CAP_CHARS  (1 << 19)
 #define CAP_TOKENS (1 << 17)
-#define CAP_INSTS  (1 << 15)
+#define CAP_INSTS  MAX_U15
 #define CAP_LABELS 4513
 #define CAP_VARS   131
 
-#define MAX_U15 0x7FFF
+STATIC_ASSERT(CAP_VARS <= (MAX_U15 - OFFSET_VARS));
 
 enum TokenTag {
     TOKEN_U15 = 0,
@@ -703,37 +706,35 @@ static SymbolJump get_jump(Memory* memory, u32* i) {
 }
 
 static void parse_compute(Memory* memory, u32* i) {
-    SymbolComp comp = COMP_ZERO;
-    SymbolDest dest = DEST_NULL;
-    SymbolJump jump = JUMP_NULL;
+    InstCompute compute = {COMP_ZERO, DEST_NULL, JUMP_NULL};
     for (u32 j = *i; j < memory->len_tokens; ++j) {
         const Token token = get_token(memory, j);
         if (token.tag == TOKEN_EQUALS) {
             EXIT_IF_PRINT(*i == j, memory, token.offset);
-            dest = get_dest(memory, i);
+            compute.dest = get_dest(memory, i);
             EXIT_IF(*i != j);
             ++(*i);
-            comp = get_comp(memory, i);
+            compute.comp = get_comp(memory, i);
             if (*i == memory->len_tokens) {
                 break;
             }
             if (get_token(memory, *i).tag == TOKEN_SCOLON) {
                 ++(*i);
-                jump = get_jump(memory, i);
+                compute.jump = get_jump(memory, i);
             }
             break;
         } else if (token.tag == TOKEN_SCOLON) {
             EXIT_IF_PRINT(*i == j, memory, token.offset);
-            comp = get_comp(memory, i);
+            compute.comp = get_comp(memory, i);
             EXIT_IF(*i != j);
             ++(*i);
-            jump = get_jump(memory, i);
+            compute.jump = get_jump(memory, i);
             break;
         }
     }
     Inst* inst = alloc_inst(memory);
     inst->tag = INST_COMPUTE;
-    inst->body.as_compute = (InstCompute){comp, dest, jump};
+    inst->body.as_compute = compute;
 }
 
 static void parse_label(Memory* memory, u32* i) {
@@ -742,12 +743,9 @@ static void parse_label(Memory* memory, u32* i) {
         if (token.tag != TOKEN_STR) {
             EXIT_PRINT(memory, token.offset);
         }
-        {
-            EXIT_IF_PRINT(MAX_U15 < memory->len_insts, memory, token.offset);
-            insert(&memory->labels,
-                   token.body.as_string,
-                   static_cast<u16>(memory->len_insts));
-        }
+        insert(&memory->labels,
+               token.body.as_string,
+               static_cast<u16>(memory->len_insts));
     }
     {
         const Token token = get_token(memory, ++(*i));
@@ -815,8 +813,8 @@ static void resolve_labels(Memory* memory) {
                     goto next;
                 }
             }
-            EXIT_IF(MAX_U15 < memory->vars.len);
-            u16 address = static_cast<u16>(memory->vars.len) + 0x0010;
+            const u16 address =
+                static_cast<u16>(memory->vars.len) + OFFSET_VARS;
             insert(&memory->vars, inst->body.as_string, address);
             inst->tag = INST_ADDRESS;
             inst->body.as_u15 = address;
