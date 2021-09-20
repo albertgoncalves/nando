@@ -864,6 +864,12 @@ static void emit(Memory* memory, const char* path) {
     }
 }
 
+static void* alloc(usize size) {
+    void* memory = sbrk(static_cast<isize>(size));
+    EXIT_IF(memory == reinterpret_cast<void*>(-1));
+    return memory;
+}
+
 i32 main(i32 n, char** args) {
     fprintf(stderr,
             "\n"
@@ -886,7 +892,7 @@ i32 main(i32 n, char** args) {
             sizeof(Memory));
     EXIT_IF(n < 3);
     {
-        Memory* memory = reinterpret_cast<Memory*>(malloc(sizeof(Memory)));
+        Memory* memory = reinterpret_cast<Memory*>(alloc(sizeof(Memory)));
         set_chars_from_file(memory, args[1]);
         set_tokens(memory);
         set_insts(memory);
@@ -905,7 +911,6 @@ i32 main(i32 n, char** args) {
                 memory->vars.len,
                 memory->vars.collisions);
         emit(memory, args[2]);
-        free(memory);
     }
     fprintf(stderr, "Done!\n");
     return EXIT_SUCCESS;
