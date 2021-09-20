@@ -1,5 +1,7 @@
 #include "hash.hpp"
 
+#include <sys/mman.h>
+
 #define MAX_U15     0x7FFF
 #define OFFSET_VARS 0x0010
 
@@ -865,8 +867,13 @@ static void emit(Memory* memory, const char* path) {
 }
 
 static void* alloc(usize size) {
-    void* memory = sbrk(static_cast<isize>(size));
-    EXIT_IF(memory == reinterpret_cast<void*>(-1));
+    void* memory = mmap(null,
+                        size,
+                        PROT_READ | PROT_WRITE,
+                        MAP_ANONYMOUS | MAP_PRIVATE,
+                        -1,
+                        0);
+    EXIT_IF(memory == MAP_FAILED);
     return memory;
 }
 
