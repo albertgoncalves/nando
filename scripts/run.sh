@@ -3,30 +3,29 @@
 set -eu
 
 flags=(
-    "-DDEBUG"
+    -DDEBUG
     "-ferror-limit=1"
-    "-fno-autolink"
-    "-fno-exceptions"
-    "-fno-math-errno"
-    "-fno-omit-frame-pointer"
-    "-fno-rtti"
-    "-fno-unwind-tables"
+    -fno-autolink
+    -fno-exceptions
+    -fno-math-errno
+    -fno-omit-frame-pointer
+    -fno-rtti
+    -fno-unwind-tables
     "-fsanitize=address"
     "-fsanitize=undefined"
-    "-fshort-enums"
-    "-fuse-ld=lld"
-    "-g"
+    -fshort-enums
+    -g
     "-march=native"
-    "-O1"
+    -O1
     "-std=c++11"
-    "-Werror"
-    "-Weverything"
-    "-Wno-c++98-compat-pedantic"
-    "-Wno-c99-extensions"
-    "-Wno-covered-switch-default"
-    "-Wno-extra-semi-stmt"
-    "-Wno-padded"
-    "-Wno-reserved-id-macro"
+    -Werror
+    -Weverything
+    -Wno-c++98-compat-pedantic
+    -Wno-c99-extensions
+    -Wno-covered-switch-default
+    -Wno-extra-semi-stmt
+    -Wno-padded
+    -Wno-reserved-id-macro
 )
 
 now () {
