@@ -36,7 +36,7 @@ now () {
 (
     start=$(now)
     clang-format -i -verbose "$WD/src"/*
-    clang++ "${flags[@]}" -o "$WD/bin/main" "$WD/src/main.cpp"
+    mold -run clang++ "${flags[@]}" -o "$WD/bin/main" "$WD/src/main.cpp"
     end=$(now)
     python3 -c "
 from sys import stderr
